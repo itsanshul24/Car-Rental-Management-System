@@ -1,0 +1,164 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <limits>
+using namespace std;
+
+class Vehicle {
+protected:
+    string make, model;
+    int year;
+    bool available;
+
+public:
+    Vehicle(string mk, string mdl, int yr)
+        : make(mk), model(mdl), year(yr), available(true) {}
+
+    virtual ~Vehicle() {}
+
+    virtual double calculateRent(int days) const = 0;
+
+    virtual void display() const {
+        cout << "Model: " << model << " | Make: " << make << " | Year: " << year;
+        cout << " | " << (available ? "Available" : "Rented") << endl;
+    }
+
+    bool isAvailable() const { return available; }
+
+    void rent() {
+        if (!available) throw "This car is already rented!";
+        available = false;
+    }
+
+    void returnVehicle() { available = true; }
+
+    string getModel() const { return model; }
+};
+
+class Car : public Vehicle {
+    double dailyRate;
+
+public:
+    Car(string mk, string mdl, int yr, double rate)
+        : Vehicle(mk, mdl, yr), dailyRate(rate) {}
+
+    void display() const override {
+        cout << "Model: " << model << " | Make: " << make
+             << " | Year: " << year << " | Rate/Day: Rs." << dailyRate
+             << " | " << (available ? "Available" : "Rented") << endl;
+    }
+
+    double calculateRent(int days) const override {
+        return days * dailyRate;
+    }
+};
+
+class Customer {
+    int id;
+    string name;
+
+public:
+    Customer(int i, string n) : id(i), name(n) {}
+
+    int getId() const { return id; }
+    string getName() const { return name; }
+};
+
+class Report {
+public:
+    void save(const Customer& c, const Car& car, double totalRent, int days) {
+        ofstream file("rental_report.txt", ios::app);
+        file << "Customer ID: " << c.getId()
+             << " | Name: " << c.getName()
+             << " | Car: " << car.getModel()
+             << " | Days: " << days
+             << " | Total Rent: Rs." << totalRent << endl;
+        file.close();
+    }
+
+    void show() {
+        ifstream file("rental_report.txt");
+        if (!file) {
+            cout << "\nNo previous rental records found.\n";
+            return;
+        }
+        cout << "\n--- Rental History ---\n";
+        string line;
+        while (getline(file, line)) cout << line << endl;
+        file.close();
+    }
+};
+
+int main() {
+    cout << "===== Welcome to Simple Car Rental System =====\n";
+
+    Car cars[] = {
+        Car("Maruti", "Swift", 2022, 2500),
+        Car("Hyundai", "Creta", 2023, 4000),
+        Car("Tata", "Nexon", 2021, 3500),
+        Car("Honda", "City", 2022, 4200),
+        Car("Mahindra", "XUV700", 2023, 6000),
+        Car("Toyota", "Fortuner", 2023, 7500),
+        Car("Kia", "Seltos", 2022, 3800),
+        Car("Renault", "Kwid", 2021, 2000),
+        Car("Hyundai", "Venue", 2023, 3700),
+        Car("Skoda", "Slavia", 2023, 4600),
+        Car("MG", "Hector", 2023, 5800),
+        Car("Suzuki", "Baleno", 2022, 3000)
+    };
+
+    int carCount = sizeof(cars) / sizeof(cars[0]);
+
+    int id;
+    string name;
+    cout << "\nEnter your Customer ID: ";
+    cin >> id;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout << "Enter your Name: ";
+    getline(cin, name);
+    Customer customer(id, name);
+
+    cout << "\nHello " << name << "! Choose a car from the list below:\n";
+    for (int i = 0; i < carCount; i++) {
+        cout << i + 1 << ". ";
+        cars[i].display();
+    }
+
+    int choice;
+    cout << "\nEnter the number of the car you want to rent: ";
+    cin >> choice;
+
+    if (choice < 1 || choice > carCount) {
+        cout << "Invalid choice.\n";
+        return 0;
+    }
+
+    Car& selectedCar = cars[choice - 1];
+
+    if (!selectedCar.isAvailable()) {
+        cout << "Sorry! That car is already rented.\n";
+        return 0;
+    }
+
+    int days;
+    cout << "Enter number of days you want to rent it for: ";
+    cin >> days;
+
+    try {
+        selectedCar.rent();
+        double totalRent = selectedCar.calculateRent(days);
+        cout << "\nCar rented successfully!\n";
+        cout << "Total Rent for " << days << " days: Rs." << totalRent << endl;
+
+        Report report;
+        report.save(customer, selectedCar, totalRent, days);
+        cout << "\nRental details saved successfully!\n";
+        report.show();
+    }
+    catch (const char* msg) {
+        cout << "Error: " << msg << endl;
+    }
+
+    cout << "\n===== Thank you for using our system! =====\n";
+    return 0;
+}
