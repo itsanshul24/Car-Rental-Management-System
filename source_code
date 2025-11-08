@@ -90,7 +90,7 @@ public:
 };
 
 int main() {
-    cout << "===== Welcome to Simple Car Rental System =====\n";
+    cout << "===== Welcome to Car Rental System =====\n";
 
     Car cars[] = {
         Car("Maruti", "Swift", 2022, 2500),
